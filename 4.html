@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Scratch Card - Did You Shock?</title>
+
+<!-- Favicon: Red Heart (base64, no separate file needed) -->
+<!-- Favicon: Love Heart -->
+<link rel="icon" type="image/png" href="image.png" sizes="32x32">
+<link rel="icon" type="image/png" href="image.png" sizes="16x16">
+<link rel="shortcut icon" href="image.png" type="image/x-icon">
+
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #4b2c3a, #7a4e5c); /* darker background for contrast */
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding-top: 40px;
+  }
+
+  /* Styled heading */
+  h1 {
+    font-size: 60px;
+    background: linear-gradient(90deg, #ff0080, #ff8c00, #ff0080);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    text-shadow: 0 0 8px #ff0080, 0 0 15px #ff8c00; /* softer glow */
+    margin-bottom: 20px;
+    animation: shine 3s linear infinite;
+  }
+
+  @keyframes shine {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .card {
+    position: relative;
+    width: 800px;
+    height: 700px;
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease;
+    border: 5px solid #fff;
+    margin-top: 20px;
+  }
+
+  .card:hover {
+    transform: scale(1.02);
+  }
+
+  /* Neon glowing border */
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 25px;
+    background: linear-gradient(45deg, #ff00cc, #3333ff, #00ffcc, #ffdd00);
+    z-index: -1;
+    filter: blur(20px);
+    opacity: 0.8;
+    animation: neonGlow 4s linear infinite;
+  }
+
+  @keyframes neonGlow {
+    0% { filter: blur(20px) hue-rotate(0deg); }
+    50% { filter: blur(25px) hue-rotate(180deg); }
+    100% { filter: blur(20px) hue-rotate(360deg); }
+  }
+
+  .reward {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .overlay-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 40px;
+    font-size: 40px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.8);
+    pointer-events: none;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .reveal-text {
+    position: absolute;
+    width: 100%;
+    top: 50%;
+    transform: translateY(-50%) scale(0.5);
+    text-align: center;
+    font-size: 60px;
+    font-weight: bold;
+    color: yellow;
+    text-shadow: 0 0 20px red, 0 0 40px orange;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.8s ease;
+  }
+
+  .reveal-text.show {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+
+</style>
+</head>
+
+<body>
+
+    <h1>Happy Valentine's Day ❤️</h1>
+
+<div class="card">
+  <img class="reward" src="Lokesh(inti).jpeg" alt="Reward">
+  <canvas id="scratchCanvas"></canvas>
+  <div class="overlay-text">✨ Scratch Me ✨</div>
+  <div class="reveal-text">😲 Shock Ayyaraa ?</div>
+</div>
+
+<script>
+const canvas = document.getElementById("scratchCanvas");
+const ctx = canvas.getContext("2d");
+const card = document.querySelector(".card");
+const revealText = document.querySelector(".reveal-text");
+
+// Match canvas to card size
+canvas.width = card.offsetWidth;
+canvas.height = card.offsetHeight;
+
+// Scratch pad image
+const scratchImg = new Image();
+scratchImg.src = "HH.png"; // replace with your scratch pad image
+
+scratchImg.onload = function () {
+  ctx.drawImage(scratchImg, 0, 0, canvas.width, canvas.height);
+  ctx.globalCompositeOperation = "destination-out";
+};
+
+let isDrawing = false;
+let revealed = false;
+
+function scratch(x, y) {
+  ctx.beginPath();
+  ctx.arc(x, y, 50, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function checkReveal() {
+  if (revealed) return;
+
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let transparent = 0;
+
+  for (let i = 3; i < pixels.data.length; i += 4) {
+    if (pixels.data[i] === 0) transparent++;
+  }
+
+  const percent = (transparent / (canvas.width * canvas.height)) * 100;
+
+  if (percent > 60) {
+    revealed = true;
+
+    canvas.style.transition = "opacity 1s";
+    canvas.style.opacity = 0;
+
+    setTimeout(() => {
+      revealText.classList.add("show");
+
+      // Optional: slide card down
+      setTimeout(() => {
+        card.style.transition = "transform 1s ease";
+        card.style.transform = "translateY(150px)";
+      }, 500);
+    }, 800);
+  }
+}
+
+// Mouse Events
+canvas.addEventListener("mousedown", () => isDrawing = true);
+canvas.addEventListener("mouseup", () => { isDrawing = false; checkReveal(); });
+canvas.addEventListener("mousemove", (e) => {
+  if (!isDrawing) return;
+  const rect = canvas.getBoundingClientRect();
+  scratch(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+// Touch Events
+canvas.addEventListener("touchstart", () => isDrawing = true);
+canvas.addEventListener("touchend", () => { isDrawing = false; checkReveal(); });
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  if (!isDrawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  scratch(touch.clientX - rect.left, touch.clientY - rect.top);
+});
+</script>
+
+</body>
+</html>
+
